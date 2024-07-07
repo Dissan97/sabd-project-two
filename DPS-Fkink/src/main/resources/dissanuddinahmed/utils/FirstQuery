@@ -1,0 +1,111 @@
+package dissanuddinahmed.queries;
+
+import com.google.common.util.concurrent.AtomicDouble;
+import dissanuddinahmed.queries.functions.TemperatureStatsProcess;
+import dissanuddinahmed.utils.ProjectUtils;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.serialization.SimpleStringEncoder;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple5;
+import org.apache.flink.connector.file.sink.FileSink;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
+import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.OnCheckpointRollingPolicy;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class FirstQuery {
+    private FirstQuery(){}
+
+    private static final String HEADERS = "ts,vaultid,count,means194,stddevs194";
+    public static void launch(DataStream<String> source){
+
+        //This variable is used to handle null temperature values
+        AtomicDouble atomicTemperature = new AtomicDouble(0);
+
+    /*
+        [0]: date
+        [4]: vault_id
+        [25]: s194_temperature_celsius
+     */
+        DataStream<Tuple3<Long, Integer, Double>> temperatureValues = source.flatMap(
+                        (FlatMapFunction<String, Tuple3<Long, Integer, Double>>) (value, out) -> {
+                            String[] records = value.split("\\n");
+                            for (String record : records) {
+                                String[] values = record.split(",", -1);
+                                if (values.length >= 38) {
+                                    long timestamp = Long.parseLong(values[0]);
+                                    int vaultId = Integer.parseInt(values[4]);
+                                    double temperature;
+                                    try {
+                                        temperature = Double.parseDouble(values[25]);
+                                        double old = atomicTemperature.get();
+                                        atomicTemperature.set(Double.parseDouble(
+                                                ProjectUtils.DECIMAL_FORMAT.format((temperature + old) / 2.0)));
+                                    } catch (NumberFormatException ignored) {
+                                        temperature = atomicTemperature.get();
+                                    }
+                                    out.collect(new Tuple3<>(timestamp, vaultId, temperature));
+                                }
+                            }
+                        }
+                ).returns(Types.TUPLE(Types.LONG, Types.INT, Types.DOUBLE))
+                .assignTimestampsAndWatermarks(ProjectUtils.getWatermarkStrategy());
+
+        Map<Integer, FileSink<String>> sinkMap = new HashMap<>();
+        //needed to add header
+        Map<Integer, AtomicBoolean> headerMap = new HashMap<>();
+        for (int days: ProjectUtils.windowsDays){
+            OutputFileConfig config = OutputFileConfig
+                    .builder()
+                    .withPartPrefix("Q1-W-"+days)
+                    .withPartSuffix(".csv")
+                    .build();
+            sinkMap.put(days, FileSink
+                    .forRowFormat(new Path("file:///results/queries/query1"),
+                            new SimpleStringEncoder<String>("UTF-8"))
+                    .withRollingPolicy(OnCheckpointRollingPolicy.build())
+                    .withOutputFileConfig(config)
+                    .build());
+            headerMap.put(days, new AtomicBoolean(true));
+        }
+
+
+        DataStream<Tuple3<Long, Integer, Double>> filteredVault = temperatureValues
+                .filter(
+                        tuple3 -> tuple3.f1 >= 1000 && tuple3.f1 <= 1020
+                );
+
+        for (int days: ProjectUtils.windowsDays) {
+            AtomicBoolean needHeader = headerMap.get(days);
+            DataStream<Tuple5<Long, Integer, Integer, Double, Double>> results = filteredVault
+                    .keyBy(t -> t.f1)
+                    .window(
+                            TumblingEventTimeWindows.of(Duration.ofDays(days)))
+                    .process(
+                            new TemperatureStatsProcess())
+                    .returns(Types.TUPLE(Types.LONG, Types.INT, Types.INT, Types.DOUBLE, Types.DOUBLE));
+
+            //to put header and data to the output file removing the brackets
+            results.map(
+                    t -> {
+                        String ret = t.toString().substring(1, t.toString().length() - 1);
+                        if(needHeader.get()){
+                            needHeader.set(false);
+                            return HEADERS + "\n" +
+                                    ret;
+                        }
+                        return ret;
+                    }
+            ).name("Q1-W-"+days).sinkTo(sinkMap.get(days));
+            //results.print();
+        }
+    }
+}
+
