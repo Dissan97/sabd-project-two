@@ -44,4 +44,7 @@ target/
 data-sources/
 **/data-sources/
 .idea
+**/projet-javas
+/projet-javas
+/tmp
 

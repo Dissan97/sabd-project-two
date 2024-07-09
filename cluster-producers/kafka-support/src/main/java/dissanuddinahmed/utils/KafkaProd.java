@@ -22,10 +22,14 @@ public class KafkaProd extends Thread{
     private static final int MINI_BATCH_SIZE = 500;
     public static final String TOPIC = "dsp-flink";
     private static final Logger LOGGER = Logger.getLogger(KafkaProd.class.getSimpleName());
-    // FINAL TUPLE WITH DATE == "2023-04-30"
-    private static final String FINAL_TUPLE ="1682812800000,Z304JGGF,ST4000DM000,0,9999,1.5452484E8,,0.0,23.0,0.0,"+
+    // FINAL_FAKE_TUPLE_NEEDED_TO_TRIGGER_ALL_WINDOW"
+    private static final String FINAL_TUPLE1 ="1682380800000,Z304JGGF,ST4000DM000,1,1010,1.5452484E8,,0.0,23.0,0.0,"+
             "5.33028348E8,,66090.0,0.0,23.0,,,0.0,0.0,0.0,0.0,23.0,0.0,0.0,7664.0,23.0,,,0.0,0.0,0.0,,,,,,65983.0,"+
             "7.0908545888E10,4.94415938E11";
+
+    private static final String FINAL_TUPLE2 ="1683676800000,Z304JGGF,ST4000DM000,1,1011,1.5452484E8,,0.0,23.0,0.0,"+
+        "5.33028348E8,,66090.0,0.0,23.0,,,0.0,0.0,0.0,0.0,23.0,0.0,0.0,7664.0,23.0,,,0.0,0.0,0.0,,,,,,65983.0,"+
+        "7.0908545888E10,4.94415938E11";
 
     public KafkaProd(String tName, String path){
         this.name = tName;
@@ -40,7 +44,6 @@ public class KafkaProd extends Thread{
 
 
     public void produceData(){
-
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))){
             /*String header = */reader.readLine();
@@ -57,7 +60,6 @@ public class KafkaProd extends Thread{
 
                     line = reader.readLine();
                     if (line == null) {
-                        batch.append(FINAL_TUPLE);
                         break;
                     }
                     batch.append(line).append('\n');
@@ -73,11 +75,21 @@ public class KafkaProd extends Thread{
             long end = System.nanoTime();
             LOGGER.info(name + "sent: " + counter + " tuples\ntook: " + (end - start) /(Math.pow(10, 9)) + "s\n" +
                     "kafka interactions: " + kafkaInterections);
+            Thread.sleep(6000);
+
+            for (int i = 0; i < 5; i++) {
+
+                this.produce(String.valueOf(System.currentTimeMillis() + i)
+                    , FINAL_TUPLE1);
+                this.produce(String.valueOf(System.currentTimeMillis()),
+                    FINAL_TUPLE2);
+
+            }
 
         }catch (ArrayIndexOutOfBoundsException e){
             LOGGER.warning(e.getMessage());
             LOGGER.info("Insert data-source-filename");
-        }catch (IOException e){
+        }catch (IOException | InterruptedException e ){
             LOGGER.warning(e.getMessage());
             System.exit(-1);
         }

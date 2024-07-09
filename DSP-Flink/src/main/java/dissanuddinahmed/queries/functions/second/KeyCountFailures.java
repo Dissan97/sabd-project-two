@@ -1,4 +1,4 @@
-package dissanuddinahmed.queries.functions;
+package dissanuddinahmed.queries.functions.second;
 
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
@@ -6,7 +6,10 @@ import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class KeyCountFailures extends
         ProcessWindowFunction<Tuple5<Long, String, String, Boolean, Integer>,

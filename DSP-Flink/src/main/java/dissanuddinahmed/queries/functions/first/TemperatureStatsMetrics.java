@@ -1,5 +1,4 @@
-package dissanuddinahmed.queries.functions;
-
+package dissanuddinahmed.queries.functions.first;
 
 import dissanuddinahmed.utils.ProjectUtils;
 import org.apache.flink.api.java.tuple.Tuple3;
@@ -8,13 +7,16 @@ import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
-public class TemperatureStatsProcess extends
-        ProcessWindowFunction<Tuple3<Long, Integer, Double>, Tuple5<Long,
-                        Integer, Integer, Double, Double>, Integer, TimeWindow> {
+public class TemperatureStatsMetrics extends
+    ProcessWindowFunction<Tuple3<Long, Integer, Double>, Tuple5<Long,
+        Integer, Integer, Double, Double>, Integer, TimeWindow> {
+
+
 
     @Override
     public void process(Integer key, Context context, Iterable<Tuple3<Long, Integer, Double>> elements,
                         Collector<Tuple5<Long, Integer, Integer, Double, Double>> out) {
+
         int vaultId = key;
         int count = 0;
         double mean = 0.0;
@@ -37,9 +39,9 @@ public class TemperatureStatsProcess extends
         long timestamp = context.window().getEnd();
 
         out.collect(new Tuple5<>(timestamp, vaultId, count,
-                Double.parseDouble(ProjectUtils.DECIMAL_FORMAT.format(mean)),
-                Double.parseDouble(ProjectUtils.DECIMAL_FORMAT.format(standardDeviation))));
+            Double.parseDouble(ProjectUtils.DECIMAL_FORMAT.format(mean)),
+            Double.parseDouble(ProjectUtils.DECIMAL_FORMAT.format(standardDeviation))));
+
+
     }
 }
-
-

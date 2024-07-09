@@ -53,7 +53,7 @@
                                     <mainClass>dissanuddinahmed.AppKafka</mainClass>
                                 </transformer>
                             </transformers>
-                            <outputFile>../AppKafka.jar</outputFile>
+                            <outputFile>../../jars/AppKafka.jar</outputFile>
                         </configuration>
                     </execution>
                 </executions>

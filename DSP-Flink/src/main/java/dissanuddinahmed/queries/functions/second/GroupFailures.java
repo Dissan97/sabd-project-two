@@ -1,4 +1,4 @@
-package dissanuddinahmed.queries.functions;
+package dissanuddinahmed.queries.functions.second;
 
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
@@ -15,7 +15,9 @@ public class GroupFailures implements AllWindowFunction<Tuple4<Long, Integer, Lo
 
     @Override
     public void apply(TimeWindow timeWindow, Iterable<Tuple4<Long, Integer, Long, String>> input,
-                      Collector<Tuple4<Long, Integer, Long, String>> out) throws Exception {
+                      Collector<Tuple4<Long, Integer, Long, String>> out) {
+
+
         PriorityQueue<Tuple4<Long, Integer, Long, String>> queue = new PriorityQueue<>(
                 Comparator.comparingLong(tuple -> tuple.f2)
         );
@@ -35,6 +37,8 @@ public class GroupFailures implements AllWindowFunction<Tuple4<Long, Integer, Lo
         for (int i = size-1; i >= 0; i--){
             out.collect(temp.get(i));
         }
+
+
     }
 
 }

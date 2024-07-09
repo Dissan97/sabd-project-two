@@ -13,4 +13,39 @@ Per i vault (campo vault id) con identificativo compreso tra 1000 e 1020, calcol
 # Query 2
 Calcolare la classifica aggiornata in tempo reale dei 10 vault che registrano il piu alto numero di falli menti nella stessa giornata. Per ogni vault, riportare il numero di fallimenti ed il modello e numero seriale degli hard disk guasti. Calcolare la query sulle finestre temporali: • 1 giorno (event time) • 3 giorni (event time); • dall’inizio del dataset. L’output della query ha il seguente schema: ts, vault id1, failures1 ([modelA, serialA, ...]), ..., vault id10, failures10 ([modelZ, serialZ, ...]) dove: • ts: timestamp relativo all’inizio della finestra su cui e stata calcolata la classifica; • vault id[1-10]: identificativo del vault in posizione [1-10] nella classifica top-10; • failures[1-10]: numero di fallimenti registrati per il vault con vault id[1-10] nella finestra considerata; • [modelA, serialA, ...]: lista di modelli e numeri seriali degli hard disk guasti per il vault di riferimento
 
-# Script Utili per lanciare correttamente il progetto:
+# Requisiti sistema
+
+- Java versione 11
+- Maven 
+- Docker-engine
+
+# Utilizzo
+1) installare il docker file di Prometheus
+```
+source project-script.sh --build
+```
+Questo fara il build del Dockerfile all'interno della cartella Prometheus
+2) Start docker compose potrebbero essere necessari permessi di root
+```
+source project-script.sh --start-compose
+```
+3) Scaricare i dati usando Nifi\
+Aprire il browser http://localhost:4883/nifi
+Caricare il template dalla cartella nifi
+'dsp-nifi-to-3-cluster.xml'\
+Attivare il CsvReader & CsvWriter è possibile attivarli 
+cliccando sul processore QueryRecord\
+Attivare almeno una volta il Flow Di nifi e attendere il completamento
+
+4) Package dei jars
+```
+source project-script.sh --install-jars
+```
+
+5) lanciare i jars
+```
+source project-script.sh --run-jar
+```
+
+6) I risultati saranno disponibili nella cartella results
+

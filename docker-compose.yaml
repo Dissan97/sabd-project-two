@@ -123,6 +123,9 @@ services:
         metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
         metrics.reporter.prom.port: 9249
         metrics.reporter.promgateway.jobName: FlinkStream
+        latency.track.operator: true
+        latency.interval: 1000
+        latency.history-size: 10
       - |
         KAFKA_BOOTSTRAP_SERVERS=kafka-1:19092,kafka-2:19093,kafka-3:19094
       - |
@@ -133,6 +136,7 @@ services:
       - ./tmp/dspflink/checkpoint:/tmp/dspflink/checkpoint
       - ./results:/results/queries/query1
       - ./results:/results/queries/query2
+      - ./jars:/jars
 
   taskmanager:
     image: flink:latest
@@ -151,6 +155,9 @@ services:
         metrics.latency.interval: 1000
         metrics.reporter.prom.port: 9249
         metrics.reporter.promgateway.jobName: FlinkStream
+        latency.track.operator: true
+        latency.interval: 1000
+        latency.history-size: 10        
       - |
         KAFKA_BOOTSTRAP_SERVERS=kafka-1:19092,kafka-2:19093,kafka-3:19094
       - |

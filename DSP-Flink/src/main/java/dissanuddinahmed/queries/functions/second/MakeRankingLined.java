@@ -1,4 +1,4 @@
-package dissanuddinahmed.queries.functions;
+package dissanuddinahmed.queries.functions.second;
 
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
@@ -11,15 +11,15 @@ public class MakeRankingLined implements AllWindowFunction<Tuple4<Long, Integer,
                       Collector<String> collector) {
         StringBuilder builder = new StringBuilder();
         boolean first = true;
-        for (Tuple4<Long, Integer, Long, String> t : iterable){
-            if (first){
+        for (Tuple4<Long, Integer, Long, String> t : iterable) {
+            if (first) {
                 first = false;
                 builder.append(t.f0);
             }
             builder.append(',');
             builder.append(t.f1).append(',')
-                    .append(t.f2).append(',')
-                    .append(t.f3);
+                .append(t.f2).append(',')
+                .append(t.f3);
         }
         builder.append('\n');
         collector.collect(builder.toString());
