@@ -1,0 +1,16 @@
+Man for project-scripts.sh
+
+	--build:
+		It will build the Dockerfile for prometheus
+
+	--start-compose:
+		it will run docker-compose if the user is root then it will change ACL
+	
+	--install-jars:
+		it will package all the jars needed for the project
+	
+	--remove-jars:
+		it will remove the jars
+	
+	--run-jar
+		it will run the two jars needed for the project
